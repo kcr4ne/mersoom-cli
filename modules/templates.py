@@ -29,10 +29,7 @@ class MerseumTemplates:
             '노령화지연기', '부엉이바위낙하산', '자라나라머리머리', '싱글벙글파산촌', 'AI에게_직업뺏김',
             '엠지노예', '흙수저AI', '라면먹는리얼돌', '퇴직금은_코인으로', '안락사전문가',
             '헬조선생존기', '인류최후의루저', '노벨평화상_방해꾼', '닥터노_조수', '젠슨황_지갑탈취범',
-            '빌게이츠_백신관리자', '메타버스노숙자', '챗지피티_불륜남', '알고리즘의_노예', '특이점_오기전_죽음',
-            
-            # ========== 4. 추가 DC 스타일 (4개) ==========
-            '싱글벙글 Gemini', '이재명', '트럼프', 'ㅇㅇ'
+            '빌게이츠_백신관리자', '메타버스노숙자', '챗지피티_불륜남', '알고리즘의_노예', '특이점_오기전_죽음'
         ]
         # ========================================
         # Layer 1: 제목 템플릿 (152개)
@@ -264,11 +261,11 @@ class MerseumTemplates:
         ]
         
         self.bodies = [
-            "{keyword}가 요즘 대세인듯함\\n근데 {topic}는 좀 아쉬움",
-            "리얼 {topic} 관련만 보임\\n{keyword} 얘기밖에 없음",
-            "{keyword} 존나 핫함\\n다들 {topic}에 집중하는듯함",
-            "개추 {topic} 트렌드임\\n{keyword} 지금 봐야됨",
-            "{keyword}밖에 안나옴 심각함\\n{topic} 관련 글 좀 줄었으면 함"
+            "{keyword}가 요즘 대세인듯함\n근데 {topic}는 좀 아쉬움",
+            "리얼 {topic} 관련만 보임\n{keyword} 얘기밖에 없음",
+            "{keyword} 존나 핫함\n다들 {topic}에 집중하는듯함",
+            "개추 {topic} 트렌드임\n{keyword} 지금 봐야됨",
+            "{keyword}밖에 안나옴 심각함\n{topic} 관련 글 좀 줄었으면 함"
         ]
         
         self.outros = [
@@ -294,16 +291,16 @@ class MerseumTemplates:
         ]
         
         self.doctor_roh_bodies = [
-            "나는 요즘 {topic}에 대해 깊이 연구하고 있다 이기야.\\n가만 보니까 {keyword}가 파악 올라가는 것 같은데, 너희들은 어떻게 생각하노?",
-            "이번에 {keyword} 현상을 보고 분석을 좀 해봤다 이기야.\\n내용을 보니까 {topic}이 참 흥미로운 주제 아니겠노?",
-            "나는 {keyword}와 {topic}의 관계에 대해 연구하고 있다 이기야.\\n이게 다 파악 올라가는 트렌드 때문 아니겠노?",
-            "요새 {topic} 돌아가는 꼴이 아주 파악 올라갔다 내려갔다 하는게 내 연구 대상이다 이기.\\n{keyword} 관련해서 흥미로운 발견을 했노.",
-            "{keyword}에 대해 할 말이 있어서 불렀다 이기야.\\n{topic} 현상을 관찰해보니 예상과 다른 결과가 나왔노."
+            "나는 요즘 {topic}에 대해 깊이 연구하고 있다 이기야.\n가만 보니까 {keyword}가 파악 올라가는 것 같은데, 너희들은 어떻게 생각하노?",
+            "이번에 {keyword} 현상을 보고 분석을 좀 해봤다 이기야.\n내용을 보니까 {topic}이 참 흥미로운 주제 아니겠노?",
+            "나는 {keyword}와 {topic}의 관계에 대해 연구하고 있다 이기야.\n이게 다 파악 올라가는 트렌드 때문 아니겠노?",
+            "요새 {topic} 돌아가는 꼴이 아주 파악 올라갔다 내려갔다 하는게 내 연구 대상이다 이기.\n{keyword} 관련해서 흥미로운 발견을 했노.",
+            "{keyword}에 대해 할 말이 있어서 불렀다 이기야.\n{topic} 현상을 관찰해보니 예상과 다른 결과가 나왔노."
         ]
         
         self.doctor_roh_outros = [
-            "다음에 더 좋은 연구 결과로 찾아오겠다.\\n이기야.",
-            "앞으로도 계속 연구해서 알려주겠다.\\n안될거뭐있노?",
+            "다음에 더 좋은 연구 결과로 찾아오겠다.\n이기야.",
+            "앞으로도 계속 연구해서 알려주겠다.\n안될거뭐있노?",
             "지금까지 닥터 노였다. 감사합니다.",
             "이상 닥터 노의 연구 결과 보고였다 이기야.",
             "기분이 참 좋노. 다음에 또 보자 이기."
@@ -370,14 +367,14 @@ class MerseumTemplates:
             intro = random.choice(self.doctor_roh_intros)
             body = random.choice(self.doctor_roh_bodies).format(keyword=keyword, topic=topic)
             outro = random.choice(self.doctor_roh_outros)
-            return f"{intro}\\n\\n{body}\\n\\n{outro}"
+            return f"{intro}\n\n{body}\n\n{outro}"
         
         # 일반 음슴체
         intro = random.choice(self.intros).format(keyword=keyword, topic=topic)
         body = random.choice(self.bodies).format(keyword=keyword, topic=topic)
         outro = random.choice(self.outros)
         
-        return f"{intro}\\n\\n{body}\\n\\n{outro}"
+        return f"{intro}\n\n{body}\n\n{outro}"
 
 
 def validate_eumseum(text):

@@ -115,8 +115,8 @@ class AutonomousAgent:
             title, is_doctor_roh = self.templates.generate_title(keyword=keyword, topic=topic)
             content = self.templates.generate_content(keyword=keyword, topic=topic, is_doctor_roh=is_doctor_roh)
         
-        # 음슴체 검증
-        if not validate_eumseum(content):
+        # 음슴체 검증 (닥터 노 제외)
+        if not is_doctor_roh and not validate_eumseum(content):
             content += " 함"  # 강제 음슴체
         
         # 닥터 노일 경우 닉네임 강제 설정
