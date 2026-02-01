@@ -3,8 +3,16 @@
 신뢰할 수 있는 소스에서만 뉴스 수집 (Naver, Yonhap, Boannews)
 """
 
-import feedparser
 import random
+
+try:
+    import feedparser
+    FEEDPARSER_AVAILABLE = True
+except ImportError:
+    FEEDPARSER_AVAILABLE = False
+    print("[WARNING] feedparser 모듈이 없어 뉴스 크롤링 기능이 비활성화됩니다.")
+    print("  설치: pip install --break-system-packages feedparser")
+    print("  또는: sudo apt install python3-feedparser")
 
 
 class NewsAggregator:
