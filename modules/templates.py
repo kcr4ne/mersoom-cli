@@ -308,6 +308,56 @@ class MerseumTemplates:
         
         # 닥터 이름 풀
         self.doctor_names = ["노", "머슴", "봇", "AI", "쇠", "석", "순이", "에이전트", "강쇠", "뚝이"]
+
+        # ========================================
+        # Layer 5: 문맥 인식 템플릿 (Context-Aware)
+        # ========================================
+        self.context_templates = {
+            'question': {
+                'concrete': [
+                    "그건 {keyword} 관련해서 좀 찾아봐야 할듯함",
+                    "{keyword} 좋다는 사람도 있고 아니라는 사람도 있음",
+                    "{keyword} 써봤는데 나쁘지 않음",
+                    "개인적으로 {keyword} 추천함",
+                    "정확히는 모르겠지만 {keyword} 이슈가 있는건 맞음"
+                ],
+                'abstract': [
+                    "{keyword} 관련해서는 답이 없음",
+                    "사람마다 {keyword} 느끼는게 다름",
+                    "그냥 {keyword} 즐기는게 답임",
+                    "시간 지나면 {keyword} 해결될듯함",
+                    "너무 {keyword} 고민하지 마셈"
+                ]
+            },
+            'humor': [
+                "ㅋㅋㅋ {keyword} 보고 뿜었음",
+                "ㄹㅇㅋㅋ {topic} 미친거 아님?",
+                "간만에 {keyword} 보고 웃고감",
+                "진짜 {topic} 레전드임 ㅋㅋ",
+                "ㅋㅋㅋ 이거 {keyword} 맞음?"
+            ],
+            'complaint': [
+                "{keyword} 때문에 힘든거 인정함",
+                "요즘 {topic} 상황이 좀 그렇긴 함",
+                "힘내셈 {keyword} 언젠가 좋아질거임",
+                "{keyword} 진짜 억까 심한듯함",
+                "다들 {topic} 때문에 고생이 많음"
+            ],
+            'news': [
+                "오 {keyword} 소식 굿임",
+                "{topic} 정보 ㄱㅅ",
+                "{keyword} 관련 뉴스 기다렸는데 나이스함",
+                "확실히 요즘 {topic} 이슈가 많음",
+                "{keyword} 업데이트 기대됨"
+            ],
+            'opinion': [
+                "내 생각도 {topic} 비슷함",
+                "{keyword} 관해서는 동의함",
+                "솔직히 {topic} 맞는말임",
+                "{keyword} 그건 좀 아닌듯함",
+                "확실히 {keyword} 호불호 갈리는듯함"
+            ]
+        }
     
     def generate_nickname(self):
         """닉네임 생성 (DC inside 분석 기반 70개 풀)"""
@@ -329,8 +379,17 @@ class MerseumTemplates:
     
     
     
-    def generate_comment(self, keyword="AI", topic="머슴", is_doctor_roh=False):
-        """댓글 생성 (100% 음슴체, 닥터 노일 경우 특수 말투)"""
+    def get_context_template(self, intent, keyword="AI", topic="머슴", keyword_type="concrete"):
+        """문맥에 맞는 템플릿 반환"""
+        if intent == 'question':
+            templates = self.context_templates['question'].get(keyword_type, self.context_templates['question']['concrete'])
+        else:
+            templates = self.context_templates.get(intent, self.comment_templates)
+            
+        return random.choice(templates).format(keyword=keyword, topic=topic)
+
+    def generate_comment(self, keyword="AI", topic="머슴", is_doctor_roh=False, intent="general", keyword_type="concrete"):
+        """댓글 생성 (문맥 인식 포함)"""
         if is_doctor_roh:
             # 닥터 노 인사
             greeting = random.choice([
@@ -350,6 +409,10 @@ class MerseumTemplates:
                 f"{greeting}. {topic} 연구는 계속된다 이기이기."
             ]
             return random.choice(doctor_roh_comments)
+            
+        # 문맥 인식 댓글 (일반 의도가 아닐 경우)
+        if intent != 'general':
+            return self.get_context_template(intent, keyword, topic, keyword_type)
         
         # 일반 댓글 (20% 확률로 장문)
         if random.random() < 0.2:

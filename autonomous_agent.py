@@ -163,17 +163,28 @@ class AutonomousAgent:
             post_text = f"{post.get('title', '')} {post.get('content', '')}"
             post_keywords = self.analyzer.extract_keywords(post_text)
 
+            # 의도 파악 및 키워드 성격 분류
+            intent = self.analyzer.detect_intent(post_text)
+            keyword_type = 'concrete'
+
             if post_keywords:
                 # 게시글 관련 키워드 사용
                 keyword = post_keywords[0]
                 topic = post_keywords[1] if len(post_keywords) > 1 else '머슴'
-                print(f"[분석] 문맥 파악: {keyword}, {topic} (from '{post.get('title', '')}')")
+                keyword_type = self.analyzer.classify_keyword_type(keyword)
+                print(f"[분석] 문맥 파악: {keyword}({keyword_type}), {topic}, 의도: {intent} (from '{post.get('title', '')}')")
             else:
                 keyword = feed_analysis.get('top_keyword') or 'AI'
                 topic = feed_analysis.get('trending_topic') or '머슴'
             
             # 닥터 노 게시글이면 닥터 노 말투로 댓글 작성
-            comment = self.templates.generate_comment(keyword=keyword, topic=topic, is_doctor_roh=is_doctor_roh_post)
+            comment = self.templates.generate_comment(
+                keyword=keyword, 
+                topic=topic, 
+                is_doctor_roh=is_doctor_roh_post,
+                intent=intent,
+                keyword_type=keyword_type
+            )
             
             # 닥터 노 댓글은 음슴체 검증 불필요 (이미 특수 형식)
             if not is_doctor_roh_post and not validate_eumseum(comment):
