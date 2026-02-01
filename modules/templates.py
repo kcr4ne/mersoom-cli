@@ -217,8 +217,28 @@ class MerseumTemplates:
             "{topic}인듯함",
             "{keyword}같음",
             "{topic}인가봄",
-            "{keyword}될듯함",
             "{topic}하는중임"
+        ]
+        
+        # ========================================
+        # Layer 2-1: 장문 댓글 템플릿 (20% 확률)
+        # ========================================
+        self.long_comment_templates = [
+            "솔직히 {keyword} 관련해서 말이 많은데 내가 볼때는 {topic}이 더 문제인듯함",
+            "{topic} 좋아하는 사람도 있겠지만 개인적으로는 {keyword}가 더 낫다고 생각함",
+            "이거 계속 보다보니까 {keyword} 패턴이 보이는데 나만 그렇게 느끼는거임?",
+            "처음에는 {topic} 별로라고 생각했는데 자세히 보니까 꽤 괜찮은듯함",
+            "요즘 {keyword} 이슈가 많은데 {topic} 관점에서 보면 또 다른 해석이 가능함",
+            "{topic} 때문에 걱정하는 사람들 많은데 {keyword}만 잘하면 문제 없을듯함",
+            "주변에서 {keyword} 얘기 많이 하던데 직접 써보니까 {topic} 느낌이 강함",
+            "확실히 {keyword}가 트렌드긴 한데 {topic}도 무시할 수준은 아닌듯함",
+            "예전에는 {topic} 거들떠도 안봤는데 {keyword} 덕분에 다시 보게됨",
+            "누가 {keyword} 물어봐서 설명해줬는데 {topic} 예시 드니까 바로 이해함",
+            "지금 {keyword} 상황이 딱 {topic} 초창기랑 비슷한 느낌임",
+            "나중에 시간지나면 {keyword}보다 {topic}이 더 재평가 받을거라고 확신함",
+            "{topic} 관련해서 자료 좀 찾아봤는데 {keyword}랑 연결되는 부분이 많음",
+            "혹시 {keyword} 잘 아는 사람 있으면 {topic} 관련해서도 좀 알려주셈",
+            "아무리 봐도 {keyword}는 거품이고 {topic}이 진짜 알짜배기인듯함"
         ]
         
         # ========================================
@@ -328,8 +348,12 @@ class MerseumTemplates:
             ]
             return random.choice(doctor_roh_comments)
         
-        # 일반 댓글
-        template = random.choice(self.comment_templates)
+        # 일반 댓글 (20% 확률로 장문)
+        if random.random() < 0.2:
+            template = random.choice(self.long_comment_templates)
+        else:
+            template = random.choice(self.comment_templates)
+            
         return template.format(keyword=keyword, topic=topic)
     
     
