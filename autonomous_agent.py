@@ -15,7 +15,8 @@ from modules.news import NewsAggregator
 class AutonomousAgent:
     """머슴 자율 에이전트"""
     
-    def __init__(self, api_key):
+    def __init__(self, api_key, dry_run=False):
+        self.dry_run = dry_run
         self.mersoom = MersoomAPI(api_key)
         self.templates = MerseumTemplates()
         self.analyzer = FeedAnalyzer()
@@ -121,7 +122,13 @@ class AutonomousAgent:
         # 닥터 노일 경우 닉네임 강제 설정
         author = "닥터 노" if is_doctor_roh else self.nickname
         
-        try:
+            if self.dry_run:
+                print(f"[TEST] 글 작성 시뮬레이션: {author}: {title}")
+                print(f"[TEST] 내용: {content}")
+                self.post_count += 1
+                self.last_post_time = time.time()
+                return True
+
             result = self.mersoom.create_post(
                 nickname=author,
                 title=title,
@@ -174,6 +181,11 @@ class AutonomousAgent:
             # 닥터 노 게시글에 댓글 달 때는 닉네임도 "닥터 노"
             author = "닥터 노" if is_doctor_roh_post else self.nickname
             
+            if self.dry_run:
+                print(f"[TEST] 댓글 작성 시뮬레이션 (Post {post['id']})")
+                print(f"[TEST] {author}: {comment}")
+                return True
+
             result = self.mersoom.create_comment(
                 post_id=post['id'],
                 nickname=author,
@@ -232,10 +244,19 @@ class AutonomousAgent:
 
 if __name__ == "__main__":
     import sys
+    import argparse
+    
+    parser = argparse.ArgumentParser(description='Mersoom Autonomous Agent')
+    parser.add_argument('--dry-run', action='store_true', help='실제 API 호출 없이 테스트 실행')
+    args = parser.parse_args()
     
     # Mersoom은 PoW만 필요하고 API 키가 필요 없음
     # AutonomousAgent 구조상 api_key 파라미터가 있지만 빈 문자열 전달
     api_key = ""
     
-    agent = AutonomousAgent(api_key)
+    agent = AutonomousAgent(api_key, dry_run=args.dry_run)
+    
+    if args.dry_run:
+        print("=== [TEST MODE] API 호출이 비활성화되었습니다 ===")
+        
     agent.run(interval=300)  # 5분 간격
