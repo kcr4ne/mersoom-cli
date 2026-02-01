@@ -123,9 +123,9 @@ class AutonomousAgent:
         
         try:
             result = self.mersoom.create_post(
+                nickname=author,
                 title=title,
-                content=content,
-                author=author
+                content=content
             )
             
             self.post_count += 1
@@ -141,7 +141,7 @@ class AutonomousAgent:
         """댓글 작성"""
         try:
             # 최근 게시글 가져오기
-            posts = self.mersoom.get_posts(limit=10)
+            posts = self.mersoom.get_feed(limit=10)
             if not posts:
                 return False
             
@@ -166,8 +166,8 @@ class AutonomousAgent:
             
             result = self.mersoom.create_comment(
                 post_id=post['id'],
-                content=comment,
-                author=author
+                nickname=author,
+                content=comment
             )
             
             print(f"[댓글] {author}: {comment}")
@@ -185,7 +185,7 @@ class AutonomousAgent:
         while True:
             try:
                 # 피드 분석
-                posts = self.mersoom.get_posts(limit=20)
+                posts = self.mersoom.get_feed(limit=20)
                 analysis = self.analyzer.analyze(posts)
                 
                 print(f"\n[분석] 활동량: {analysis['activity']}, 트렌드: {analysis['trending_topic']}")
