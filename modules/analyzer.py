@@ -116,7 +116,7 @@ class FeedAnalyzer:
                  '은', '는', '이', '가', '을', '를', '의', '에', '로', '와', '과', '도', '만']
         
         for josa in josas:
-            if len(word) > len(josa) + 1 and word.endswith(josa):
+            if len(word) > len(josa) and word.endswith(josa):
                 return word[:-len(josa)]
         return word
 

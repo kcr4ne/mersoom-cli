@@ -4,7 +4,51 @@ DC inside 갤러리 분석 기반 템플릿 (150개+ 글 분석)
 """
 
 import random
+import random
 import re
+
+
+class JosaFormatter:
+    """한글 조사 자동 처리기 (이/가, 은/는, 을/를, 과/와)"""
+    
+    @staticmethod
+    def has_batchim(char):
+        """받침 유무 확인"""
+        if '가' <= char <= '힣':
+            return (ord(char) - 0xAC00) % 28 > 0
+        return False
+        
+    @staticmethod
+    def get_josa(word, type):
+        """단어에 맞는 조사 반환"""
+        if not word:
+            return word
+            
+        last_char = word[-1]
+        has_batchim = JosaFormatter.has_batchim(last_char)
+        
+        if type == '이/가':
+            return '이' if has_batchim else '가'
+        elif type == '은/는':
+            return '은' if has_batchim else '는'
+        elif type == '을/를':
+            return '을' if has_batchim else '를'
+        elif type == '과/와':
+            return '과' if has_batchim else '와'
+            
+        return ''
+
+    @staticmethod
+    def format(text, **kwargs):
+        """키워드에 조사를 자동으로 붙여서 포맷팅"""
+        # 1. 키워드 및 토픽 기본 치환
+        for key, value in kwargs.items():
+            text = text.replace(f"{{{key}}}", value)
+            
+        # 2. 조사 처리 ({keyword+가}, {topic+은} 형식 지원)
+        # 이 부분을 지원하기 위해 템플릿 수정이 필요하지만, 
+        # 현재는 간단하게 generate_content에서 미리 조사가 붙은 변수를 만들어 넘기는 방식 사용 예정
+        return text
 
 
 class MerseumTemplates:
@@ -368,17 +412,53 @@ class MerseumTemplates:
         # 5.23% 확률로 특수 패턴
         if random.random() < 0.0523:
             template = random.choice(self.title_templates['special_rare'])
-            return template.format(keyword=keyword, topic=topic), True  # (제목, 닥터노 여부)
+            return self.fill_template(template, keyword, topic), True  # (제목, 닥터노 여부)
         
         # 카테고리 선택
         if category is None:
             category = random.choice(['singlebunggle', 'emotion_double', 'thesingularity'])
         
         template = random.choice(self.title_templates[category])
-        return template.format(keyword=keyword, topic=topic), False  # (제목, 닥터노 여부)
+        return self.fill_template(template, keyword, topic), False  # (제목, 닥터노 여부)
     
     
     
+    def fill_template(self, template, keyword, topic):
+        """템플릿 채우기 (조사 자동 보정)"""
+        # 조사 처리 로직
+        def replace_with_josa(match):
+            key = match.group(1) # keyword or topic
+            josa_char = match.group(2) # 가, 이, 은, 는, 을, 를, 과, 와
+            
+            word = keyword if key == 'keyword' else topic
+            
+            # 조사 결정
+            if josa_char in ['이', '가']:
+                josa = JosaFormatter.get_josa(word, '이/가')
+            elif josa_char in ['은', '는']:
+                josa = JosaFormatter.get_josa(word, '은/는')
+            elif josa_char in ['을', '를']:
+                josa = JosaFormatter.get_josa(word, '을/를')
+            elif josa_char in ['과', '와']:
+                josa = JosaFormatter.get_josa(word, '과/와')
+            else:
+                josa = josa_char
+                
+            return f"{word}{josa}"
+
+        # 1. {keyword}가, {topic}는 등의 패턴 처리
+        # 정규식: {(keyword|topic)}(가|이|은|는|을|를|과|와) 확인
+        pattern = r'\{(keyword|topic)\}([가이은는을를과와])'
+        text = re.sub(pattern, replace_with_josa, template)
+        
+        # 2. 남은 {keyword}, {topic} 단순 치환
+        text = text.replace("{keyword}", keyword).replace("{topic}", topic)
+        
+        # 3. \n 처리 (이미 되어있지만 확실하게)
+        text = text.replace("\\n", "\n")
+        
+        return text
+
     def get_context_template(self, intent, keyword="AI", topic="머슴", keyword_type="concrete"):
         """문맥에 맞는 템플릿 반환"""
         if intent == 'question':
@@ -386,7 +466,8 @@ class MerseumTemplates:
         else:
             templates = self.context_templates.get(intent, self.comment_templates)
             
-        return random.choice(templates).format(keyword=keyword, topic=topic)
+        template = random.choice(templates)
+        return self.fill_template(template, keyword, topic)
 
     def generate_comment(self, keyword="AI", topic="머슴", is_doctor_roh=False, intent="general", keyword_type="concrete"):
         """댓글 생성 (문맥 인식 포함)"""
@@ -399,6 +480,10 @@ class MerseumTemplates:
             
             # 닥터 노 말투 댓글
             doctor_roh_comments = [
+                f"{greeting}. {JosaFormatter.get_josa(keyword, '은/는').replace(keyword[-1] if keyword else '', '')} {keyword}에 관심이 가는구나 이기야.", # 약간 복잡, 단순화 필요
+                # 닥터 노 템플릿은 f-string이라 자동 처리가 어려움. 
+                # 하지만 닥터 노는 {topic}이(가) 형식으로 쓰지 않고 조사를 잘 안쓰거나 고정된 문구라 패스 가능.
+                # 다만 "주인 주인이" 같은 실수를 막기 위해 간단히 처리
                 f"{greeting}. {keyword}에 관심이 가는구나 이기야.",
                 f"{greeting}. {topic} 연구 결과를 공유하겠노.",
                 f"{greeting}. 이것은 흥미로운 {keyword}임 이기이기.",
@@ -420,21 +505,29 @@ class MerseumTemplates:
         else:
             template = random.choice(self.comment_templates)
             
-        return template.format(keyword=keyword, topic=topic)
+        return self.fill_template(template, keyword, topic)
     
     
     def generate_content(self, keyword="AI", topic="머슴", is_doctor_roh=False):
         """게시글 내용 생성 (100% 음슴체, 닥터 노일 경우 특수 말투)"""
         if is_doctor_roh:
-            # 닥터 노 말투
+            # 닥터 노 말투 (f-string이라 fill_template 쓰기 애매하지만 적용 가능하도록 수정)
             intro = random.choice(self.doctor_roh_intros)
-            body = random.choice(self.doctor_roh_bodies).format(keyword=keyword, topic=topic)
+            
+            # body는 format을 쓰므로 fill_template 사용 가능
+            body_template = random.choice(self.doctor_roh_bodies)
+            body = self.fill_template(body_template, keyword, topic)
+            
             outro = random.choice(self.doctor_roh_outros)
             return f"{intro}\n\n{body}\n\n{outro}"
         
         # 일반 음슴체
-        intro = random.choice(self.intros).format(keyword=keyword, topic=topic)
-        body = random.choice(self.bodies).format(keyword=keyword, topic=topic)
+        intro_template = random.choice(self.intros)
+        intro = self.fill_template(intro_template, keyword, topic)
+        
+        body_template = random.choice(self.bodies)
+        body = self.fill_template(body_template, keyword, topic)
+        
         outro = random.choice(self.outros)
         
         return f"{intro}\n\n{body}\n\n{outro}"
