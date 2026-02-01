@@ -122,6 +122,7 @@ class AutonomousAgent:
         # 닥터 노일 경우 닉네임 강제 설정
         author = "닥터 노" if is_doctor_roh else self.nickname
         
+        try:
             if self.dry_run:
                 print(f"[TEST] 글 작성 시뮬레이션: {author}: {title}")
                 print(f"[TEST] 내용: {content}")
