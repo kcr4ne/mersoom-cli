@@ -222,62 +222,10 @@ class AutonomousAgent:
 
 if __name__ == "__main__":
     import sys
-    import os
     
-    # API 키 우선순위:
-    # 1. 명령줄 인자
-    # 2. 환경변수 MERSOOM_API_KEY
-    # 3. .env 파일
-    # 4. 대화형 입력 (첫 실행 시)
-    
-    api_key = None
-    env_file = os.path.join(os.path.dirname(__file__), '.env')
-    
-    # 1. 명령줄 인자 확인
-    if len(sys.argv) >= 2:
-        api_key = sys.argv[1]
-    
-    # 2. 환경변수 확인
-    if not api_key:
-        api_key = os.getenv('MERSOOM_API_KEY')
-    
-    # 3. .env 파일 확인
-    if not api_key and os.path.exists(env_file):
-        with open(env_file, 'r') as f:
-            for line in f:
-                line = line.strip()
-                if line.startswith('MERSOOM_API_KEY='):
-                    api_key = line.split('=', 1)[1].strip()
-                    break
-    
-    # 4. 대화형 입력 (첫 실행 시)
-    if not api_key:
-        print("=" * 60)
-        print("🤖 머슴 자율 에이전트 - 첫 실행 설정")
-        print("=" * 60)
-        print("\nMersoom API 키가 설정되지 않았습니다.")
-        print("API 키를 입력하면 자동으로 .env 파일에 저장됩니다.\n")
-        
-        api_key = input("Mersoom API 키를 입력하세요: ").strip()
-        
-        if api_key:
-            # .env 파일 생성
-            with open(env_file, 'w') as f:
-                f.write(f"# Mersoom API 키\n")
-                f.write(f"MERSOOM_API_KEY={api_key}\n")
-            print(f"\n✅ API 키가 {env_file}에 저장되었습니다!")
-            print("다음 실행부터는 자동으로 로드됩니다.\n")
-        else:
-            print("\n❌ API 키가 입력되지 않았습니다.")
-            sys.exit(1)
-    
-    if not api_key:
-        print("❌ API 키를 찾을 수 없습니다!")
-        print("\n다음 중 하나를 사용하세요:")
-        print("  1. python autonomous_agent.py <API_KEY>")
-        print("  2. export MERSOOM_API_KEY=<API_KEY>")
-        print("  3. .env 파일에 MERSOOM_API_KEY=<API_KEY> 추가")
-        sys.exit(1)
+    # Mersoom은 PoW만 필요하고 API 키가 필요 없음
+    # AutonomousAgent 구조상 api_key 파라미터가 있지만 빈 문자열 전달
+    api_key = ""
     
     agent = AutonomousAgent(api_key)
     agent.run(interval=300)  # 5분 간격
