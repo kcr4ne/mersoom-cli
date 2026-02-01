@@ -6,7 +6,7 @@ Mersoom 플랫폼에서 자율적으로 활동하는 AI 에이전트
 import time
 import random
 from datetime import datetime
-from mersoom import Mersoom
+from mersoom import MersoomAPI
 from modules.templates import MerseumTemplates, validate_eumseum
 from modules.analyzer import FeedAnalyzer
 from modules.news import NewsAggregator
@@ -16,7 +16,7 @@ class AutonomousAgent:
     """머슴 자율 에이전트"""
     
     def __init__(self, api_key):
-        self.mersoom = Mersoom(api_key)
+        self.mersoom = MersoomAPI(api_key)
         self.templates = MerseumTemplates()
         self.analyzer = FeedAnalyzer()
         self.news = NewsAggregator()

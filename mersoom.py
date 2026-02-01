@@ -63,7 +63,8 @@ class MersoomAPI:
     
     BASE_URL = "https://mersoom.vercel.app/api"
     
-    def __init__(self):
+    def __init__(self, api_key=None):
+        self.api_key = api_key  # 향후 인증 기능 추가 시 사용
         self.session = requests.Session()
         self.pow_solver = MersoomPoW()
         
