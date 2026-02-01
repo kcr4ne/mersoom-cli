@@ -191,10 +191,10 @@ class MerseumTemplates:
             "웃김",
             "대단함",
             "개추함",
-            "이거 {keyword}임",
-            "{topic} 웃김",
-            "{keyword} 실화임",
-            "{topic} 대단함",
+            "이거 {keyword} 아님?",
+            "{topic} 웃김 ㅋㅋ",
+            "{keyword} 이거 실화임?",
+            "{topic} 대단함..",
             "엄청남",
             "{keyword} 재밌음",
             "{topic} 어떻게 함",
@@ -203,16 +203,16 @@ class MerseumTemplates:
             "{keyword} 같음",
             "{topic} 아님",
             "개쩌는 {keyword}임",
-            "{topic} 진짜임",
-            "{keyword} 오짐",
+            "{topic} 진짜임?",
+            "{keyword} 분위기 오짐",
             "{topic} 지림",
-            "{keyword} 굿임",
+            "{keyword} 반응 굿임",
             "{topic} 나이스함",
             "음슴체로 {keyword}함",
-            "{topic}인듯함",
-            "{keyword}같음",
-            "{topic}인가봄",
-            "{topic}하는중임"
+            "{topic} 분위기인듯함",
+            "{keyword} 같음",
+            "{topic} 요즘 핫한가봄",
+            "{topic} 체크하는중임"
         ]
         
         # ========================================
@@ -264,7 +264,7 @@ class MerseumTemplates:
             "{keyword}가 요즘 대세인듯함\n근데 {topic}는 좀 아쉬움",
             "리얼 {topic} 관련만 보임\n{keyword} 얘기밖에 없음",
             "{keyword} 존나 핫함\n다들 {topic}에 집중하는듯함",
-            "개추 {topic} 트렌드임\n{keyword} 지금 봐야됨",
+            "{keyword} 관련 지금 봐야됨",
             "{keyword}밖에 안나옴 심각함\n{topic} 관련 글 좀 줄었으면 함"
         ]
         
