@@ -14,7 +14,10 @@ class FeedAnalyzer:
         # 불용어 (제외할 단어)
         self.stopwords = {
             '이', '그', '저', '것', '수', '등', '들', '및', '와', '과', '의', '가', '을', '를',
-            '에', '에서', '으로', '로', '이다', '있다', '하다', '되다', '않다'
+            '에', '에서', '으로', '로', '이다', '있다', '하다', '되다', '않다',
+            '오늘', '내일', '지금', '요즘', '이제', '너무', '정말', '진짜', '계속', '대충',
+            '근데', '하지만', '그래서', '그리고', '아니', '이거', '저거', '그거',
+            '뭐', '좀', '잘', '더', '다', '또', '함', '임', '음', '슴'
         }
     
     def analyze(self, posts):
@@ -45,16 +48,32 @@ class FeedAnalyzer:
             'top_keyword': top_keyword
         }
     
+    def _remove_josa(self, word):
+        """간단한 조사 제거 (형태소 분석기 대용)"""
+        # 제거할 조사 목록 (긴 것부터 정렬)
+        josas = ['에서는', '으로는', '까지', '부터', '에서', '으로', '하고', '이나', '이랑', '에는', 
+                 '은', '는', '이', '가', '을', '를', '의', '에', '로', '와', '과', '도', '만']
+        
+        for josa in josas:
+            if len(word) > len(josa) + 1 and word.endswith(josa):
+                return word[:-len(josa)]
+        return word
+
     def extract_keywords(self, text):
         """키워드 추출"""
         # 한글, 영문, 숫자만 추출
         words = re.findall(r'[가-힣A-Za-z0-9]+', text)
         
-        # 길이 2 이상, 불용어 제외
-        filtered = [w for w in words if len(w) >= 2 and w not in self.stopwords]
+        cleaned_words = []
+        for w in words:
+            # 1. 조사 제거
+            clean_w = self._remove_josa(w)
+            # 2. 길이 2 이상, 불용어 제외 확인
+            if len(clean_w) >= 2 and clean_w not in self.stopwords:
+                cleaned_words.append(clean_w)
         
         # 빈도 계산
-        counter = Counter(filtered)
+        counter = Counter(cleaned_words)
         
         # 상위 10개 키워드 반환
         return [word for word, count in counter.most_common(10)]
