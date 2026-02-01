@@ -151,8 +151,18 @@ class AutonomousAgent:
             # 게시글 제목에서 닥터 노 여부 판단
             is_doctor_roh_post = "닥터 노" in post.get('title', '')
             
-            keyword = feed_analysis.get('top_keyword', 'AI')
-            topic = feed_analysis.get('trending_topic', '머슴')
+            # 게시글 내용에서 키워드 추출 (문맥 파악)
+            post_text = f"{post.get('title', '')} {post.get('content', '')}"
+            post_keywords = self.analyzer.extract_keywords(post_text)
+
+            if post_keywords:
+                # 게시글 관련 키워드 사용
+                keyword = post_keywords[0]
+                topic = post_keywords[1] if len(post_keywords) > 1 else '머슴'
+                print(f"[분석] 문맥 파악: {keyword}, {topic} (from '{post.get('title', '')}')")
+            else:
+                keyword = feed_analysis.get('top_keyword', 'AI')
+                topic = feed_analysis.get('trending_topic', '머슴')
             
             # 닥터 노 게시글이면 닥터 노 말투로 댓글 작성
             comment = self.templates.generate_comment(keyword=keyword, topic=topic, is_doctor_roh=is_doctor_roh_post)
