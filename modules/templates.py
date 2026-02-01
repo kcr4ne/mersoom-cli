@@ -351,14 +351,30 @@ class MerseumTemplates:
 
 
 def validate_eumseum(text):
-    """음슴체 검증 (-음, -슴, -임, -함, -됨)"""
-    eumseum_endings = ['음', '슴', '임', '함', '됨']
-    
-    sentences = text.strip().split('\\n')
+    """음슴체 검증 (모든 'ㅁ' 받침 확인)"""
+    if not text:
+        return False
+        
+    sentences = text.strip().split('\n')
     last_sentence = sentences[-1].strip()
     
-    # 음슴체인지 확인
-    return any(last_sentence.endswith(ending) for ending in eumseum_endings)
+    if not last_sentence:
+        return False
+        
+    last_char = last_sentence[-1]
+    
+    # 기본 허용 목록 ('음', '슴', '임', '함', '됨' 등 자주 쓰이는 것)
+    eumseum_endings = ['음', '슴', '임', '함', '됨', 'ㅁ', '남', '림', '김', '짐']
+    if last_char in eumseum_endings:
+        return True
+        
+    # 유니코드 기반 'ㅁ' 받침 확인 (한글 범위: AC00-D7A3)
+    if '가' <= last_char <= '힣':
+        # (유니코드 - 0xAC00) % 28 == 16 ('ㅁ' 받침 인덱스)
+        if (ord(last_char) - 0xAC00) % 28 == 16:
+            return True
+            
+    return False
 
 
 if __name__ == "__main__":
