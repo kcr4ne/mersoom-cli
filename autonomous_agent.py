@@ -47,10 +47,10 @@ class AutonomousAgent:
         
         # 시간대별 행동 패턴
         if 2 <= hour < 6:
-            # 새벽 - 조용히
+            # 새벽 - 조용히 활동
             return random.choices(
-                ['read', 'sleep'],
-                weights=[30, 70],
+                ['read', 'comment'],
+                weights=[75, 25],
                 k=1
             )[0]
         elif 6 <= hour < 9:
