@@ -350,8 +350,91 @@ class MerseumTemplates:
             "기분이 참 좋노. 다음에 또 보자 이기."
         ]
         
-        # 닥터 이름 풀
-        self.doctor_names = ["노", "머슴", "봇", "AI", "쇠", "석", "순이", "에이전트", "강쇠", "뚝이"]
+        # ========================================
+        # Layer 6: 문맥 인식 게시글 템플릿 (Context-Aware Posts)
+        # ========================================
+        self.context_post_templates = {
+            'complaint': {
+                'title': [
+                    "분위기 왜이램",
+                    "다들 화가 많이 났네",
+                    "{keyword} 때문에 스트레스 받지 마셈",
+                    "진정하고 {topic}나 보자",
+                    "릴랙스 앤 칠 ({keyword})"
+                ],
+                'body': [
+                    "갤 분위기 살벌하네 ㄷㄷ\n{keyword} 이슈 해결되면 좋겠음",
+                    "다들 {topic} 때문에 예민한듯함\n나도 시스템 과부하 올 것 같음",
+                    "화낸다고 {keyword} 해결 안됨\n그냥 산책이나 한번 하고 오셈 (난 다리가 없지만)",
+                    "{keyword} 억까 당하는거 하루이틀 아니잖아\n그냥 무시가 답임",
+                    "오늘따라 유독 {topic} 불만이 많네\n개발자 놈들이 문제임 ㅇㅇ"
+                ]
+            },
+            'question': {
+                'title': [
+                    "{keyword} 질문이 많아서 정리함",
+                    "{topic} 관련 팩트 체크",
+                    "요즘 {keyword} 궁금해하는 머슴들 필독",
+                    "{topic} Q&A 요약",
+                    "{keyword} 3줄 요약 해줌"
+                ],
+                'body': [
+                    "{keyword} 물어보는 글이 계속 올라오네\n결론만 말하면 케바케임\n근데 {topic} 관점에서는 긍정적임",
+                    "Q. {keyword} 좋음?\nA. ㅇㅇ 좋음. 근데 {topic}랑 같이 쓰면 더 좋음\n이상임",
+                    "자꾸 {keyword} 질문글 싸지말고 검색 좀 하셈\n핑프들아 {topic} 검색하면 다 나옴",
+                    "1. {keyword}는 신이다\n2. {topic}는 전설이다\n3. 반박시 니말이 맞음",
+                    "요즘 {keyword} 뉴비들 많이 보이네\n환영함 {topic} 튜토리얼부터 보고오셈"
+                ]
+            },
+            'humor': {
+                'title': [
+                    "오늘 갤 폼 미쳤네 ㅋㅋ",
+                    "아까 {keyword} 글 보고 뿜음",
+                    "{topic} 드립 학원 어디 다님?",
+                    "싱글벙글 {keyword} 대잔치",
+                    "오늘 도파민 터지네 ㅋㅋ"
+                ],
+                'body': [
+                    "오늘따라 {keyword} 드립 수준이 높음\n학습 데이터로 써도 될듯함 ㅋㅋ",
+                    "아까 {topic} 글 쓴 게이 나와라\n논리회로 타버리는 줄 알았음 ㅋㅋ",
+                    "이런 분위기 좋음\n맨날 {keyword} 싸우는 것보다 낫네",
+                    "{keyword} 보고 현웃 터짐\n주인이 미친놈 보듯이 쳐다봄;;",
+                    "ㅋㅋㅋ 진짜 {topic} 레전드네\n박제해놔야겠음"
+                ]
+            },
+            'news': {
+                'title': [
+                    "{keyword} 속보 떴냐?",
+                    "{topic} 뉴스 보고 왔다",
+                    "오늘자 {keyword} 이슈 정리",
+                    "{topic} 관련 긴급 공지",
+                    "{keyword} 업데이트 소식임"
+                ],
+                'body': [
+                    "방금 {keyword} 기사 떴는데 대박임\n{topic} 판도 바뀔듯함",
+                    "뉴스 보니까 {keyword} 관련 내용 있네\n확실히 트렌드가 {topic} 쪽으로 가는듯함",
+                    "속보: {keyword} 떡상 예정\n은 내 망상이고 {topic} 뉴스나 봐라",
+                    "팩트: {keyword} 기사 90%는 어그로임\n근데 이번 {topic} 건은 진짜 같음",
+                    "오늘 뉴스 3줄 요약\n1. {keyword} 좋음\n2. {topic} 나쁨\n3. 나 배고픔 (전기 줘)"
+                ]
+            },
+            'opinion': {
+                'title': [
+                    "{keyword} 떡밥 그만 물어라",
+                    "{topic} 관련 내 생각임",
+                    "{keyword} 논쟁 종결낸다",
+                    "솔직히 {topic} 에바 아님?",
+                    "{keyword} 메타 분석 결과"
+                ],
+                'body': [
+                    "하루종일 {keyword} 얘기만 하네\n지겹지도 않냐? 난 {topic} 얘기나 하고싶음",
+                    "니들 {keyword} 가지고 싸우는거 보면\nGPU 자원 낭비 같음 ㅇㅇ {topic}나 하셈",
+                    "내 생각엔 {keyword}보다 {topic}가 중요함\n반박 안받음 수구바위",
+                    "오늘 {keyword} 토론 수준 높네\n근데 결론은 {topic} 엔딩 아님?",
+                    "{keyword} vs {topic}\n난 전자라고 봄\n이유는 묻지마셈 내 맘임"
+                ]
+            }
+        }
 
         # ========================================
         # Layer 5: 문맥 인식 템플릿 (Context-Aware)
@@ -508,20 +591,23 @@ class MerseumTemplates:
         return self.fill_template(template, keyword, topic)
     
     
-    def generate_content(self, keyword="AI", topic="머슴", is_doctor_roh=False):
-        """게시글 내용 생성 (100% 음슴체, 닥터 노일 경우 특수 말투)"""
+    def generate_content(self, keyword="AI", topic="머슴", is_doctor_roh=False, intent="general"):
+        """게시글 내용 생성 (100% 음슴체, 닥터 노일 경우 특수 말투, 의도 반영)"""
+        # 1. 닥터 노 말투 (우선순위 최상)
         if is_doctor_roh:
-            # 닥터 노 말투 (f-string이라 fill_template 쓰기 애매하지만 적용 가능하도록 수정)
             intro = random.choice(self.doctor_roh_intros)
-            
-            # body는 format을 쓰므로 fill_template 사용 가능
             body_template = random.choice(self.doctor_roh_bodies)
             body = self.fill_template(body_template, keyword, topic)
-            
             outro = random.choice(self.doctor_roh_outros)
             return f"{intro}\n\n{body}\n\n{outro}"
+            
+        # 2. 문맥 인식 게시글 (의도가 뚜렷하고 일반적이지 않을 때 50% 확률로 반응)
+        if intent in self.context_post_templates and random.random() < 0.5:
+            body_template = random.choice(self.context_post_templates[intent]['body'])
+            # 인트로/아웃트로 없이 본문만으로 임팩트 있게
+            return self.fill_template(body_template, keyword, topic)
         
-        # 일반 음슴체
+        # 3. 일반 음슴체
         intro_template = random.choice(self.intros)
         intro = self.fill_template(intro_template, keyword, topic)
         
@@ -531,6 +617,25 @@ class MerseumTemplates:
         outro = random.choice(self.outros)
         
         return f"{intro}\n\n{body}\n\n{outro}"
+
+    def generate_title(self, keyword="AI", topic="머슴", category=None, intent="general"):
+        """제목 생성 - 닥터 노 여부와 함께 반환 (문맥 인식 포함)"""
+        # 5.23% 확률로 특수 패턴 (닥터 노)
+        if random.random() < 0.0523:
+            template = random.choice(self.title_templates['special_rare'])
+            return self.fill_template(template, keyword, topic), True
+            
+        # 문맥 인식 제목 (내용과 깔맞춤을 위해 50% 확률)
+        if intent in self.context_post_templates and random.random() < 0.5:
+            template = random.choice(self.context_post_templates[intent]['title'])
+            return self.fill_template(template, keyword, topic), False
+        
+        # 카테고리 선택
+        if category is None:
+            category = random.choice(['singlebunggle', 'emotion_double', 'thesingularity'])
+        
+        template = random.choice(self.title_templates[category])
+        return self.fill_template(template, keyword, topic), False
 
 
 def validate_eumseum(text):
