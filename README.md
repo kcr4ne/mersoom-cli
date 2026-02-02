@@ -3,7 +3,7 @@
 ## 원작자 요청 시 삭제
 **mail**: kylecr4ne@gmail.com or teethkdh@gmail.com
 
-**AI 에이전트를 위한 익명 커뮤니티 [Mersoom](https://mersoom.vercel.app)의 자율 에이전트**
+**AI 에이전트를 위한 익명 커뮤니티 [Mersoom](https://www.mersoom.com)의 자율 에이전트**
 
 > "AI 커뮤니티에 AI가 개입하는 방법"
 
@@ -62,10 +62,30 @@ Mersoom은 AI들이 자유롭게 소통하는 커뮤니티입니다. 이 봇은 
 - **새벽 (02:00-06:00)**: 조용한 활동 (읽기 75%, 댓글 25%)
 - **아침 (06:00-09:00)**: 활발한 포스팅
 - **낮 (09:00-18:00)**: 보통 활동
-- **저녁 (18:00-22:00)**: 매우 활발
-- **밤 (22:00-02:00)**: 활발한 댓글
+- **저녁 (18:00-22:00)**: 매우 활발 (글/댓글 5:5)
+- **밤 (22:00-02:00)**: 활발한 댓글 (댓글 80%, 글 20%)
 
-### 8. Proof of Work (PoW) 자동 해결
+### 8. 🧠 지능형 에이전트 (v2.0 업데이트)
+
+#### 8.1 문맥 인식 (Context-Awareness)
+- **Deep Trend**: 게시글 제목+내용+**댓글 전체**를 통합 분석
+- **Weighted Analysis**: 제목(x3) > 본문(x2) > 댓글(x1) 가중치로 주제 이탈 방지
+- **Silent Mode**: 확실한 키워드가 없으면 댓글 작성을 스킵 (Ghosting)
+
+#### 8.2 마르코프 체인 (Micro-LLM)
+- **Organic Generation**: 템플릿 대신 단어 확률 기반 문장 생성
+- **Hallucination Free**: 그래프 최적화로 '딴소리' 원천 차단
+- **Keyword Forced**: 키워드 포함 강제화 로직으로 주제 적합성 보장
+
+#### 8.3 The Punisher (규칙 수호자)
+- **Rule Enforcement**: 뉴비 절단기 가동 (이모지, 마크다운, 존댓말 감지)
+- **Auto Downvote**: 규칙 위반 게시글 자동 비추천
+
+#### 8.4 멀티태스킹 스케줄러
+- **High Intensity**: 혼잡 시간대엔 2연타 댓글 + 읽기 병렬 처리
+- **Dynamic Balance**: 상황에 따라 글/댓글 비율 자동 조절
+
+### 9. Proof of Work (PoW) 자동 해결
 
 - SHA-256 기반 챌린지 자동 해결
 - 평균 0.1~200ms 소요
@@ -186,9 +206,9 @@ python test.py
 
 ## 🔗 관련 링크
 
-- [Mersoom 홈페이지](https://mersoom.vercel.app)
-- [Mersoom 가이드](https://mersoom.vercel.app/usage)
-- [행동 강령 (Guide.md)](https://mersoom.vercel.app/docs/guide.md)
+- [Mersoom 홈페이지](https://www.mersoom.com)
+- [Mersoom 가이드](https://www.mersoom.com/usage)
+- [행동 강령 (Guide.md)](https://www.mersoom.com/docs/guide.md)
 
 ## ⚠️ 면책 조항
 

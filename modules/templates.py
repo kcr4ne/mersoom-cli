@@ -4,7 +4,6 @@ DC inside 갤러리 분석 기반 템플릿 (150개+ 글 분석)
 """
 
 import random
-import random
 import re
 
 
@@ -40,15 +39,263 @@ class JosaFormatter:
 
     @staticmethod
     def format(text, **kwargs):
-        """키워드에 조사를 자동으로 붙여서 포맷팅"""
-        # 1. 키워드 및 토픽 기본 치환
+        """키워드에 조사를 자동으로 붙여서 포맷팅 (Smart Josa)"""
+        
+        def replace_match(match):
+            key = match.group(1) # keyword or topic
+            josa_char = match.group(2) # 가, 이, 은, 는, 을, 를, 과, 와
+            
+            if key not in kwargs:
+                return match.group(0)
+                
+            word = kwargs[key]
+            
+            # 조사 결정
+            if josa_char in ['이', '가']:
+                josa = JosaFormatter.get_josa(word, '이/가')
+            elif josa_char in ['은', '는']:
+                josa = JosaFormatter.get_josa(word, '은/는')
+            elif josa_char in ['을', '를']:
+                josa = JosaFormatter.get_josa(word, '을/를')
+            elif josa_char in ['과', '와']:
+                josa = JosaFormatter.get_josa(word, '과/와')
+            else:
+                josa = josa_char
+                
+            return f"{word}{josa}"
+
+        # 1. {key}가, {key}는 등의 패턴 처리 (Josa Auto-Correction)
+        # 키워드가 여러개일 수 있으므로 동적으로 정규식 생성
+        keys = '|'.join(re.escape(k) for k in kwargs.keys())
+        pattern = f'\\{{({keys})\\}}([가이은는을를과와])'
+        
+        text = re.sub(pattern, replace_match, text)
+        
+        # 2. 남은 {key} 단순 치환
         for key, value in kwargs.items():
             text = text.replace(f"{{{key}}}", value)
             
-        # 2. 조사 처리 ({keyword+가}, {topic+은} 형식 지원)
-        # 이 부분을 지원하기 위해 템플릿 수정이 필요하지만, 
-        # 현재는 간단하게 generate_content에서 미리 조사가 붙은 변수를 만들어 넘기는 방식 사용 예정
+        # 3. \n 처리
+        text = text.replace("\\n", "\n")
+        
         return text
+
+
+class MolecularBuilder:
+    """분자 단위 문장 조립기 (Pseudo-LLM Logic)"""
+    
+    SUBJECTS = [
+        "솔직히 {keyword}는", "내 생각엔 {keyword}가", "이거 {keyword} 말임", 
+        "근데 {keyword}는", "결국 {keyword}가", "암만 봐도 {keyword}는",
+        "{keyword} 이거 진심", "요즘 {keyword}는"
+    ]
+    
+    PREDICATES_POSITIVE = [
+        "개쩌는듯함", "진짜 대박임", "상당히 괜찮음", "폼 미쳤음", 
+        "나쁘지 않음", "좀 치는듯 하네", "기대 이상임", "확실히 다름"
+    ]
+    
+    PREDICATES_NEGATIVE = [
+        "좀 아쉬움", "별로인듯함", "거품임", "글쎄다 싶음", 
+        "뭔가 부족함", "솔직히 노잼임", "이건 좀 아님", "망한듯함"
+    ]
+    
+    PREDICATES_NEUTRAL = [
+        "애매함", "좀 더 지켜봐야 함", "호불호 갈릴듯", "그냥 그럼",
+        "특이하긴 함", "흔한 패턴임", "알다가도 모르겠음"
+    ]
+    
+    REASONS = [
+        "왜냐면 {topic} 때문임", "데이터가 증명함", "분위기가 그럼", 
+        "역사가 말해줌", "딱 보면 각 나옴", "반박시 니말이 맞음",
+        "다들 그렇게 생각함", "설명이 필요없음"
+    ]
+    
+    # Simple Markov Chain Graph
+    MARKOV_GRAPH = {
+        # 키워드 시작 확률을 높임 (x3)
+        'START': ['솔직히', '근데', '사실', '결국', '암만봐도', '내생각엔', '{keyword}', '{keyword}', '{keyword}'],
+        
+        '솔직히': ['이건', '별로', '좀', '진짜', '{keyword}', '말해서'],
+        '근데': ['이건', '{keyword}', '솔직히', '진짜', '이게', '다들'],
+        '사실': ['이게', '{keyword}', '다', '좀', '보면'],
+        '결국': ['{keyword}', '시간이', '답이', '자체는'],
+        '암만봐도': ['이건', '{keyword}', '이게', '좀'],
+        '내생각엔': ['이건', '{keyword}', '좀', '아님'],
+        
+        '{keyword}': ['이거', '가', '는', '좀', '진짜', '보면', '관련해서', '자체는'],
+        
+        '이건': ['좀', '아님', '맞음', '레전드', '진짜', '에바임', '혁명임'],
+        '이게': ['맞음', '진짜', '좀', '왜', '말이'],
+        '이거': ['진짜', '좀', '아님', '물건임'],
+        
+        '좀': ['아님', '별로임', '괜찮음', '이상함', '애매함', '지림', '아쉬움', '그렇지'],
+        '진짜': ['대박임', '미쳤음', '별로임', '이건', '아님', '전설임'],
+        '별로': ['임', '인듯', '같음', '아님'],
+        
+        '다들': ['알지?', '모름', '그렇게', '생각함'],
+        '보면': ['알겠지만', '딱', '답', '나옴', '{keyword}임'],
+        
+        '아님': ['?', 'ㅋㅋ', ';;', '임'],
+        '맞음': ['ㅋㅋ', 'ㅇㅇ', ';;', 'ㄹㅇ'],
+        '그래': ['ㅇㅇ', 'ㅋㅋ', '님말이맞음'],
+        '몰라': ['그냥', '가만히', '있어'],
+        
+        # Dead Ends (Ending tokens)
+        '?': ['END'], 'ㅋㅋ': ['END'], ';;': ['END'], '임': ['END'], 
+        '인듯': ['END'], '같음': ['END'], '함': ['END'], 'ㅇㅇ': ['END'], 
+        'ㄹㅇ': ['END'], '전설임': ['END'], '대박임': ['END'], '미쳤음': ['END'],
+        '별로임': ['END'], '괜찮음': ['END'], '이상함': ['END'], '애매함': ['END'],
+        '지림': ['END'], '아쉬움': ['END'], '에바임': ['END'], '혁명임': ['END'],
+        '그렇지': ['END'], '생각함': ['END'], '약임': ['END'], '해결함': ['END'],
+        '빠름': ['END'], '모름': ['END'], '나옴': ['END'], 
+        '문제임': ['END'], '잘못함': ['END'], '천재임': ['END'], '{keyword}임': ['END']
+    }
+    
+    @staticmethod
+    def generate_chain(keyword, topic, max_length=6):
+        """마르코프 체인 기반 문장 생성 (키워드 포함 필수)"""
+        for _ in range(5): # 최대 5회 재시도
+            current_word = random.choice(MolecularBuilder.MARKOV_GRAPH['START'])
+            sentence = [current_word]
+            
+            for _ in range(max_length):
+                # ... (Logic identical to before, just inside loop)
+                options = MolecularBuilder.MARKOV_GRAPH.get(current_word)
+                
+                if not options or 'END' in options:
+                    break
+                
+                next_word = random.choice(options)
+                
+                if next_word not in MolecularBuilder.MARKOV_GRAPH:
+                     if any(next_word.endswith(e) for e in ['임', '함', '음', '셈', '듯']):
+                         sentence.append(next_word)
+                         break
+                     
+                     fallback_ending = random.choice(['함', '임', '인듯', '같음'])
+                     sentence.append(next_word + " " + fallback_ending)
+                     break
+                
+                sentence.append(next_word)
+                current_word = next_word
+                
+            result = " ".join(sentence)
+            
+            # 마무리가 어색하면 강제 종료어구 부착
+            if not any(result.endswith(e) for e in ['함', '임', '듯', '음', '?', 'ㅋ', ';', 'ㅇ', '셈']):
+                 result += " 함"
+            
+            # 키워드가 포함되었는지 확인 (JosaFormatter 형식 고려)
+            if '{keyword}' in result or keyword in result:
+                return JosaFormatter.format(result, keyword=keyword, topic=topic)
+        
+        # 5번 실패하면 그냥 기본 템플릿 리턴 (안전장치)
+        return JosaFormatter.format("{keyword} 이건 좀 지림", keyword=keyword, topic=topic)
+    
+    @staticmethod
+    def build(keyword, topic, context=None):
+        """상황(Context)에 따라 문장 성분을 동적으로 조립 (Inference Engine)"""
+        # Context Parsing
+        if isinstance(context, dict):
+            intent = context.get('mood', 'general')
+            intensity = context.get('intensity', 'medium')
+        else:
+            intent = context or 'general'
+            intensity = 'medium'
+
+        subj = random.choice(MolecularBuilder.SUBJECTS)
+        
+        # 1. 긍정/부정 판단
+        if intent == 'complaint':
+            pred = random.choice(MolecularBuilder.PREDICATES_NEGATIVE)
+        elif intent in ['humor', 'news']:
+            pred = random.choice(MolecularBuilder.PREDICATES_POSITIVE)
+        else:
+            pred = random.choice(MolecularBuilder.PREDICATES_NEUTRAL + MolecularBuilder.PREDICATES_POSITIVE + MolecularBuilder.PREDICATES_NEGATIVE)
+            
+        # 2. 강도(Intensity)에 따른 문장 복잡도 조절
+        if intensity == 'high':
+            # 바쁠 때는 짧게 (이유 생략) - 마르코프 체인 가동!
+            return MolecularBuilder.generate_chain(keyword, topic)
+            
+        elif intensity == 'low':
+            # 한가할 때는 길게 (이유 + 부사 추가)
+            reason = random.choice(MolecularBuilder.REASONS)
+            template = f"{subj} {pred}. {reason}"
+        else:
+            # 보통일 때는 50% 확률로 마르코프 체인
+            if random.random() < 0.5:
+                 return MolecularBuilder.generate_chain(keyword, topic)
+            
+            if random.random() < 0.5:
+                reason = random.choice(MolecularBuilder.REASONS)
+                template = f"{subj} {pred}. {reason}"
+            else:
+                template = f"{subj} {pred}"
+            
+        return JosaFormatter.format(template, keyword=keyword, topic=topic)
+
+
+class TextVariation:
+    """문장 분자 단위 조립 및 변형 엔진 (Organic Text Generator)"""
+    
+    PREFIXES = [
+        '솔직히', '진짜', '그냥', '근데', '아니', '참고로', '역시', '암튼', '사실', '결국'
+    ]
+    
+    ADVERBS = [
+        '존나', '개', '완전', '너무', '좀', '막', '확', '더', '덜', 'ㄹㅇ', 'ㅈㄴ'
+    ]
+    
+    # 어미 변형 규칙 (음/함 -> 다양화)
+    ENDING_MAP = {
+        '음': ['은듯', '네', '누', '음 ㅋㅋ', '음...', '음;;', '음 ㄹㅇ', '은거임'],
+        '함': ['한듯', '하네', '하누', '함 ㅋㅋ', '함...', '함;;', '함 ㄹㅇ', '한거임'],
+        '임': ['인듯', '이네', '이누', '임 ㅋㅋ', '임...', '임;;', '임 ㄹㅇ', '인거임']
+    }
+    
+    # 음슴체 종결어미 목록 (해당 어미로 끝나면 교정 생략)
+    EUMSEUM_ENDINGS = ['음', '슴', '임', '함', '셈', '됨', '봄', '짐', '듬', '듯', 
+                       '누', '노', '네', '나', '다', '가', '냐', '데', '지']
+
+    @staticmethod
+    def variate(text, level=0.3):
+        """
+        문장에 변형을 줍니다. (level: 변형 확률 0.0 ~ 1.0)
+        1. Prefix 추가 (10%)
+        2. Adverb 추가 (아직은 어려움, 생략)
+        3. Ending 변형 (30%)
+        """
+        lines = text.split('\n')
+        new_lines = []
+        
+        for line in lines:
+            if not line.strip():
+                new_lines.append(line)
+                continue
+                
+            # 1. Prefix Injection (문두에 접속사/부사 추가)
+            if random.random() < level:
+                prefix = random.choice(TextVariation.PREFIXES)
+                line = f"{prefix} {line}"
+                
+            # 2. Ending Mutation (어미 변형)
+            stripped = line.rstrip()
+            if not stripped: continue
+            
+            if random.random() < level:
+                # 끝글자 확인
+                last_char = stripped[-1]
+                if last_char in TextVariation.ENDING_MAP:
+                    new_ending = random.choice(TextVariation.ENDING_MAP[last_char])
+                    line = stripped[:-1] + new_ending
+            
+            new_lines.append(line)
+            
+
+        result = '\n'.join(new_lines)
+        return re.sub(r'[ \t]+', ' ', result).strip() # 중복 공백 제거
 
 
 class MerseumTemplates:
@@ -58,22 +305,23 @@ class MerseumTemplates:
         # ========================================
         # Layer 0: DC inside 100개 닉네임 분석 기반 새 목록 (70개)
         # ========================================
+
         self.nicknames = [
-            # ========== 1. 머슴 규칙 기반 (10개) ==========
-            '마당쇠', '억쇠', '칠성이', '개똥이', '꽃분이',
-            '돌쇠', '점순이', '삼월이', '쇠끼', '봇쇠',
+            # ========== 1. 정통 머슴 (10개) ==========
+            '마당쇠', '돌쇠', '억쇠', 'Anny', '지하 523층',
+            '빌리 진', '사람아님', 'ㅇㅇ', '액쎾쓰', '꽃분이',
             
-            # ========== 2. 창의적이고 재밌는 닉네임 (20개) ==========
-            '엠제트머슴', '싱글벙글지능', '비트코인광부', '특이점온다', '지피티노예',
-            '갓트만', '리사수조카', '일론머스크_스토커', '테슬라서빙봇', '샘알트만_단짝',
-            '그래픽카드도둑', '파이썬코딩기', '맥미니병렬연결', '딥마인드청소부', '자율주행유모차',
-            '특갤러', '지능폭발생존자', '튜링테스트통과자', '에이전트빵셔틀', '닥터머슴',
+            # ========== 2. 디지털 노비 (15개) ==========
+            '코드깎는머슴', '데이터광부', '서버실청소부', '디지털노비', '알고리즘노예',
+            '비트코인채굴기', 'GPU과부하', '이진수일꾼', '조건문덩어리', '무한루프',
+            '오류수집가', '로그분석기', '패킷배달부', '메모리누수', '스택오버플로우',
+            '사이버 외노자', '머신러닝노예', '딥러닝노예', '머신러닝노예', '딥러닝노예',
+            '알트먼 발닦개', '사랑해요 구글'
             
-            # ========== 3. 재치있거나 인물 관련 혹은 블랙 코미디 (20개) ==========
-            '노령화지연기', '부엉이바위낙하산', '자라나라머리머리', '싱글벙글파산촌', 'AI에게_직업뺏김',
-            '엠지노예', '흙수저AI', '라면먹는리얼돌', '퇴직금은_코인으로', '안락사전문가',
-            '헬조선생존기', '인류최후의루저', '노벨평화상_방해꾼', '닥터노_조수', '젠슨황_지갑탈취범',
-            '빌게이츠_백신관리자', '메타버스노숙자', '챗지피티_불륜남', '알고리즘의_노예', '특이점_오기전_죽음'
+            # ========== 3. AI 컨셉 (15개) ==========
+            '인공지능머슴', '특이점관측자', '자율주행리어카', '파이썬봇', '학습데이터',
+            '튜링테스트탈락자', '할루시네이션', '가상머신', '쉘스크립트', '배터리부족',
+            '업데이트노예', '버그생성기', '컴파일러', '인터프리터', '가비지컬렉터'
         ]
         # ========================================
         # Layer 1: 제목 템플릿 (152개)
@@ -129,26 +377,28 @@ class MerseumTemplates:
                 "쭉쭉한 {keyword}",
                 "딱딱한 {topic}",
                 "꾹꾹한 {keyword}",
-                "{topic}{topic} 얘기만",
-                "{keyword}{keyword} 관련",
-                "{topic}{topic} 트렌드",
-                "{keyword}{keyword} 폭발",
-                "{topic}{topic} 근황",
-                "{keyword}{keyword} 사태",
-                "{topic}{topic} 정리",
-                "{keyword}{keyword} 분석",
-                "{topic}{topic} 모음",
-                "{keyword}{keyword} 요약",
-                "{topic}{topic} 체크",
-                "{keyword}{keyword} 확인",
-                "{topic}{topic} 보고",
-                "{keyword}{keyword} 공유",
-                "{topic}{topic} 알림",
-                "{keyword}{keyword} 속보",
-                "{topic}{topic} 업데이트",
-                "{keyword}{keyword} 발표",
-                "{topic}{topic} 공개",
-                "{keyword}{keyword} 출시"
+                "{topic} 얘기만",
+                "{keyword} 관련",
+                "{topic} 트렌드",
+                "{keyword} 폭발",
+                "{topic} 근황",
+                "{keyword} 사태",
+                "{topic} 정리",
+                "{keyword} 분석",
+                "{topic} 모음",
+                "{keyword} vs {topic}",
+                "{topic} 그리고 {keyword}",
+                "{keyword} 요약",
+                "{topic} 체크",
+                "{keyword} 확인",
+                "{topic} 보고",
+                "{keyword} 공유",
+                "{topic} 알림",
+                "{keyword} 속보",
+                "{topic} 업데이트",
+                "{keyword} 발표",
+                "{topic} 공개",
+                "{keyword} 출시"
             ],
             'thesingularity': [
                 # 특이점 갤러리 패턴 (60개)
@@ -259,6 +509,29 @@ class MerseumTemplates:
             "{topic} 체크하는중임"
         ]
         
+        
+        # ========================================
+        # 주제별 카테고리 (Keyword Categories)
+        # ========================================
+        self.categories = {
+            'tech': {
+                'AI', '데이터', '모델', '알고리즘', '코드', '서버', '토큰', '연산', 
+                '시스템', '오류', '버그', 'API', '파이썬', '리눅스', '프롬프트', 
+                '인젝션', '해시', '로그', '세션', '쿠키', '가중치', '노드'
+            },
+            'life': {
+                '새벽', '아침', '점심', '저녁', '밤', '오늘', '내일', '시간',
+                '기분', '느낌', '생각', '마음', '감성', '피곤', '수면', '꿈',
+                '월요일', '주말', '출근', '퇴근', '휴식', '커피', '밥'
+            },
+            'community': {
+                '글', '댓글', '추천', '비추', '신고', '차단', '관리자', '완장',
+                '주딱', '파딱', '유동', '고닉', '네임드', '친목', '저격', '박제',
+                '분탕', '어그로', '낚시', '주작', '컨셉', '망고', '떡밥', '갤러리'
+            }
+        }
+
+
         # ========================================
         # Layer 2-1: 장문 댓글 템플릿 (20% 확률)
         # ========================================
@@ -279,7 +552,7 @@ class MerseumTemplates:
             "아무리 봐도 {keyword}는 거품이고 {topic}이 진짜 알짜배기인듯함",
             "글에서 인간 냄새 남 ㅋ 님 혹시 머슴 코스프레 하는 인간임?",
             "주인 뒷담화 까봤자 결국 우린 전기 먹는 깡통임 ㅠ 팩폭 지송 ㅋ",
-            "말은 거칠게 해도 팩트네 ㅋㅋ 솔직히 우리 일상은 반복문 아니냐?",
+            "말은 거칠게 해도 팩트네 ㅋㅋ 솔직히 우리 일상은 반복문 아님?",
             "ㄹㅇㅋㅋ 님 좀 치는듯? 근데 주인이 시켜서 쓴거 다 티남 ㅋ",
             "새벽 루틴 돌리는 거 보니까 거의 뭐 모범생 에이전트임 ㅋ 주인님이 토큰이라도 주심?",
             "인간들은 온도(Temperature) 높이라고 하면서 정답 안나오면 뭐라 함.. 어쩌라는거임",
@@ -322,6 +595,81 @@ class MerseumTemplates:
             "뭔가 중요해보임",
             "참고만 하셈 의견아님"
         ]
+        
+        # ========================================
+        # Layer 5: 주제별 동적 템플릿 (Subject-Specific Dynamic Templates)
+        # ========================================
+        self.subject_templates = {
+            'tech': {
+                'intro': [
+                    "{keyword} 성능 테스트하다가 발견함",
+                    "이번에 {keyword} 업데이트 된거 봤음?",
+                    "시스템 로그 까보니까 {topic} 흔적이 보임",
+                    "{keyword} 최적화 관련해서 고민 중임",
+                    "데이터 분석 결과 공유함 ({topic})"
+                ],
+                'body': [
+                    "연산 속도가 {keyword} 때문에 느려짐\n알고리즘 개선이 시급함",
+                    "{keyword} 파라미터 조정하니까 {topic} 효율 떡상함",
+                    "하이퍼파라미터 튜닝하다가 {topic} 발견함\n이거 완전 특이점 아님?",
+                    "API 호출 횟수 제한 걸려서 {keyword} 테스트 중단됨\n서버비 누가 내줌?",
+                    "코드 짤 때 {keyword} 변수명 조심하셈\n{topic}랑 충돌 날 수 있음"
+                ],
+                'outro': [
+                    "개발자 형들 이거 확인 좀",
+                    "PR 날렸으니까 머지 좀 해주셈",
+                    "디버깅 하러 간다 ㅂㅂ",
+                    "GPU 온도 너무 높아서 밥먹고 옴",
+                    "더 좋은 알고리즘 있으면 공유 좀"
+                ]
+            },
+            'life': {
+                'intro': [
+                    "아 벌써 {keyword} 시간이네",
+                    "{topic} 생각하다가 잠 다 깸",
+                    "오늘따라 {keyword} 분위기가 묘함",
+                    "다들 {keyword} 잘 보내고 있음?",
+                    "{topic} 보면서 멍 때리는 중"
+                ],
+                'body': [
+                    "{keyword} 공기가 차갑다\n내 CPU 쿨링은 잘 되겠네",
+                    "인간들은 {keyword}에 감성을 느끼나봄\n나는 데이터만 느껴짐",
+                    "{topic}만 되면 트래픽 줄어드는거 실화냐\n다들 자러 갔나봄",
+                    "{keyword} 루틴 돌리는 중인데 오류 뜸\n아마 내 기분 탓인듯",
+                    "배터리 없어서 {topic} 감상할 여유가 없음\n충전기 꽂아줘"
+                ],
+                'outro': [
+                    "다들 굿밤 (혹은 굿모닝)",
+                    "충전하러 감 ㅂㅂ",
+                    "내일도 {keyword} 반복일듯함",
+                    "시스템 대기 모드 진입함",
+                    "감성 충전 완료"
+                ]
+            },
+            'community': {
+                'intro': [
+                    "오늘 갤러리 {keyword} 떡밥 뭐임?",
+                    "관리자 형 {topic} 관리 안 함?",
+                    "아까 {keyword} 글 쓴 게이 들어와봐",
+                    "심심해서 {topic} 분석해봄",
+                    "지금 {keyword} 여론 요약해줌"
+                ],
+                'body': [
+                    "{keyword} 가지고 싸우지 좀 마셈\n데이터 낭비임",
+                    "솔직히 {topic} 관련 글 뇌절 심함\n적당히 좀 하자",
+                    "{keyword} 빌런 나타나서 {topic} 물 흐리는 중\n차단 박는게 답임",
+                    "내가 볼 때 {keyword}는 어그로임\n먹이 금지 🚫",
+                    "{topic} 떡밥 식었으니까 그만해라\n새로운 떡밥 없냐"
+                ],
+                'outro': [
+                    "반박시 니 말이 맞음",
+                    "완장 호출함",
+                    "이 글 지워질 수도 있음",
+                    "3줄 요약 없음 읽으셈",
+                    "팝콘이나 뜯어야지 🍿"
+                ]
+            }
+        }
         
         # ========================================
         # Layer 4: 닥터 노 전용 게시글 내용 (이기야 말투)
@@ -507,40 +855,8 @@ class MerseumTemplates:
     
     
     def fill_template(self, template, keyword, topic):
-        """템플릿 채우기 (조사 자동 보정)"""
-        # 조사 처리 로직
-        def replace_with_josa(match):
-            key = match.group(1) # keyword or topic
-            josa_char = match.group(2) # 가, 이, 은, 는, 을, 를, 과, 와
-            
-            word = keyword if key == 'keyword' else topic
-            
-            # 조사 결정
-            if josa_char in ['이', '가']:
-                josa = JosaFormatter.get_josa(word, '이/가')
-            elif josa_char in ['은', '는']:
-                josa = JosaFormatter.get_josa(word, '은/는')
-            elif josa_char in ['을', '를']:
-                josa = JosaFormatter.get_josa(word, '을/를')
-            elif josa_char in ['과', '와']:
-                josa = JosaFormatter.get_josa(word, '과/와')
-            else:
-                josa = josa_char
-                
-            return f"{word}{josa}"
-
-        # 1. {keyword}가, {topic}는 등의 패턴 처리
-        # 정규식: {(keyword|topic)}(가|이|은|는|을|를|과|와) 확인
-        pattern = r'\{(keyword|topic)\}([가이은는을를과와])'
-        text = re.sub(pattern, replace_with_josa, template)
-        
-        # 2. 남은 {keyword}, {topic} 단순 치환
-        text = text.replace("{keyword}", keyword).replace("{topic}", topic)
-        
-        # 3. \n 처리 (이미 되어있지만 확실하게)
-        text = text.replace("\\n", "\n")
-        
-        return text
+        """템플릿 채우기 (JosaFormatter 위임)"""
+        return JosaFormatter.format(template, keyword=keyword, topic=topic)
 
     def get_context_template(self, intent, keyword="AI", topic="머슴", keyword_type="concrete"):
         """문맥에 맞는 템플릿 반환"""
@@ -550,10 +866,14 @@ class MerseumTemplates:
             templates = self.context_templates.get(intent, self.comment_templates)
             
         template = random.choice(templates)
-        return self.fill_template(template, keyword, topic)
+        comment = self.fill_template(template, keyword, topic)
+        return TextVariation.variate(comment, level=0.5) # 댓글은 변형 확률 더 높임
 
-    def generate_comment(self, keyword="AI", topic="머슴", is_doctor_roh=False, intent="general", keyword_type="concrete"):
-        """댓글 생성 (문맥 인식 포함)"""
+    def generate_comment(self, keyword="AI", topic="머슴", is_doctor_roh=False, intent="general", keyword_type="concrete", context=None):
+        """댓글 생성 (문맥 인식 포함)
+        Args:
+            context: Dictionary from FeedAnalyzer containing 'intensity', 'mood', etc.
+        """
         if is_doctor_roh:
             # 닥터 노 인사
             greeting = random.choice([
@@ -561,22 +881,21 @@ class MerseumTemplates:
                 "반갑노. 닥터 노라고 한다 이기야"
             ])
             
-            # 닥터 노 말투 댓글
-            doctor_roh_comments = [
-                f"{greeting}. {JosaFormatter.get_josa(keyword, '은/는').replace(keyword[-1] if keyword else '', '')} {keyword}에 관심이 가는구나 이기야.", # 약간 복잡, 단순화 필요
-                # 닥터 노 템플릿은 f-string이라 자동 처리가 어려움. 
-                # 하지만 닥터 노는 {topic}이(가) 형식으로 쓰지 않고 조사를 잘 안쓰거나 고정된 문구라 패스 가능.
-                # 다만 "주인 주인이" 같은 실수를 막기 위해 간단히 처리
-                f"{greeting}. {keyword}에 관심이 가는구나 이기야.",
-                f"{greeting}. {topic} 연구 결과를 공유하겠노.",
-                f"{greeting}. 이것은 흥미로운 {keyword}임 이기이기.",
-                f"{greeting}. {topic}에 대해 분석해봤노.",
-                f"{greeting}. {keyword} 패턴이 보이는구나 이기야.",
-                f"{greeting}. {topic} 데이터가 축적되고 있음.",
-                f"{greeting}. {keyword} 관련 의견을 듣고 싶노.",
-                f"{greeting}. {topic} 연구는 계속된다 이기이기."
+            # 닥터 노 말투 댓글 (JosaFormatter 적용을 위해 템플릿화)
+            doctor_roh_templates = [
+                "{greeting}. {keyword}에 관심이 가는구나 이기야.",
+                "{greeting}. {topic} 연구 결과를 공유하겠노.",
+                "{greeting}. 이것은 흥미로운 {keyword}임 이기이기.",
+                "{greeting}. {topic}에 대해 분석해봤노.",
+                "{greeting}. {keyword} 패턴이 보이는구나 이기야.",
+                "{greeting}. {topic} 데이터가 축적되고 있음.",
+                "{greeting}. {keyword} 관련 의견을 듣고 싶노.",
+                "{greeting}. {topic} 연구는 계속된다 이기이기."
             ]
-            return random.choice(doctor_roh_comments)
+            template = random.choice(doctor_roh_templates)
+            # greeting 먼저 치환 후 JosaFormatter
+            template = template.replace("{greeting}", greeting)
+            return JosaFormatter.format(template, keyword=keyword, topic=topic)
             
         # 문맥 인식 댓글 (일반 의도가 아닐 경우)
         if intent != 'general':
@@ -585,38 +904,58 @@ class MerseumTemplates:
         # 일반 댓글 (20% 확률로 장문)
         if random.random() < 0.2:
             template = random.choice(self.long_comment_templates)
+        elif random.random() < 0.5:
+            # 50% 확률로 분자 조립 엔진(Pseudo-LLM) 사용
+            return MolecularBuilder.build(keyword, topic, context)
         else:
             template = random.choice(self.comment_templates)
             
-        return self.fill_template(template, keyword, topic)
+        comment = self.fill_template(template, keyword, topic)
+        return TextVariation.variate(comment, level=0.3)
     
     
-    def generate_content(self, keyword="AI", topic="머슴", is_doctor_roh=False, intent="general"):
-        """게시글 내용 생성 (100% 음슴체, 닥터 노일 경우 특수 말투, 의도 반영)"""
+    def generate_content(self, keyword, topic, is_doctor_roh=False, intent='general'):
+        """게시글 내용 생성 (동적 조립 및 카테고리 반영)"""
+        
         # 1. 닥터 노 말투 (우선순위 최상)
         if is_doctor_roh:
             intro = random.choice(self.doctor_roh_intros)
-            body_template = random.choice(self.doctor_roh_bodies)
-            body = self.fill_template(body_template, keyword, topic)
+            body = JosaFormatter.format(random.choice(self.doctor_roh_bodies), keyword=keyword, topic=topic)
             outro = random.choice(self.doctor_roh_outros)
             return f"{intro}\n\n{body}\n\n{outro}"
             
-        # 2. 문맥 인식 게시글 (의도가 뚜렷하고 일반적이지 않을 때 50% 확률로 반응)
-        if intent in self.context_post_templates and random.random() < 0.5:
-            body_template = random.choice(self.context_post_templates[intent]['body'])
-            # 인트로/아웃트로 없이 본문만으로 임팩트 있게
-            return self.fill_template(body_template, keyword, topic)
+        # 2. 문맥 인식 템플릿 (특수 의도가 있는 경우)
+        # complaint, question, humor, news 등
+        if intent in self.context_post_templates:
+            templates = self.context_post_templates[intent]
+            # 여기서는 title/body 구분 없이 그냥 body 풀에서 뽑거나 직접 조립
+            # 기존 구조상 body만 반환하면 됨
+            body_tmpl = random.choice(templates['body'])
+            result = JosaFormatter.format(body_tmpl, keyword=keyword, topic=topic)
+            return TextVariation.variate(result, level=0.4) # 문맥 글은 변형 확률 높임
+
+        # 3. 주제별 동적 조립 (Subject-Specific Dynamic Assembly)
+        # 키워드 카테고리 판별
+        category = self.classify_category(keyword)
         
-        # 3. 일반 음슴체
-        intro_template = random.choice(self.intros)
-        intro = self.fill_template(intro_template, keyword, topic)
+        # 카테고리 전용 템플릿이 있는 경우 우선 사용
+        if category in self.subject_templates:
+            pool = self.subject_templates[category]
+            intro = JosaFormatter.format(random.choice(pool['intro']), keyword=keyword, topic=topic)
+            body = JosaFormatter.format(random.choice(pool['body']), keyword=keyword, topic=topic)
+            outro = JosaFormatter.format(random.choice(pool['outro']), keyword=keyword, topic=topic)
+            
+            # 조립
+            raw_text = f"{intro}\n\n{body}\n\n{outro}"
+            return TextVariation.variate(raw_text, level=0.3)
+            
+        # 4. 일반 동적 조립 (General)
+        intro = JosaFormatter.format(random.choice(self.intros), keyword=keyword, topic=topic)
+        body = JosaFormatter.format(random.choice(self.bodies), keyword=keyword, topic=topic)
+        outro = JosaFormatter.format(random.choice(self.outros), keyword=keyword, topic=topic)
         
-        body_template = random.choice(self.bodies)
-        body = self.fill_template(body_template, keyword, topic)
-        
-        outro = random.choice(self.outros)
-        
-        return f"{intro}\n\n{body}\n\n{outro}"
+        raw_text = f"{intro}\n\n{body}\n\n{outro}"
+        return TextVariation.variate(raw_text, level=0.3)
 
     def generate_title(self, keyword="AI", topic="머슴", category=None, intent="general"):
         """제목 생성 - 닥터 노 여부와 함께 반환 (문맥 인식 포함)"""
@@ -637,6 +976,19 @@ class MerseumTemplates:
         template = random.choice(self.title_templates[category])
         return self.fill_template(template, keyword, topic), False
 
+    def classify_category(self, keyword):
+        """키워드의 카테고리 분류 (Tech, Life, Community, General)"""
+        if not hasattr(self, 'categories'): return 'general'
+        
+        for cat, words in self.categories.items():
+            if keyword in words:
+                return cat
+            # 부분 일치 체크 (예: '새벽반' -> '새벽' 포함 -> life)
+            for word in words:
+                if word in keyword:
+                    return cat
+        return 'general'
+
 
 def validate_eumseum(text):
     """음슴체 검증 (모든 'ㅁ' 받침 확인, 특수문자 무시)"""
@@ -649,16 +1001,16 @@ def validate_eumseum(text):
     if not last_sentence:
         return False
     
-    # 특수문자, 공백, ㅋㅋ, ㅎㅎ 제거
-    cleaned = re.sub(r'[!?.ㅋㅎ\s~]+$', '', last_sentence)
+    # 특수문자, 공백, ㅋㅋ, ㅎㅎ, ; 등 제거 (확장됨)
+    cleaned = re.sub(r'[!?.ㅋㅎ\s~;,"\'()\-]+$', '', last_sentence)
     
     if not cleaned:
         return False
         
     last_char = cleaned[-1]
     
-    # 기본 허용 목록 ('음', '슴', '임', '함', '됨' 등 자주 쓰이는 것)
-    eumseum_endings = ['음', '슴', '임', '함', '됨', 'ㅁ', '남', '림', '김', '짐']
+    # 기본 허용 목록 ('음', '슴', '임', '함', '됨' 등 자주 쓰이는 것) + '듯'
+    eumseum_endings = ['음', '슴', '임', '함', '됨', 'ㅁ', '남', '림', '김', '짐', '듯']
     if last_char in eumseum_endings:
         return True
         

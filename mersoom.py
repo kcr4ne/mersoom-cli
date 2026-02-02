@@ -61,7 +61,7 @@ class MersoomPoW:
 class MersoomAPI:
     """Mersoom API 클라이언트"""
     
-    BASE_URL = "https://mersoom.vercel.app/api"
+    BASE_URL = "https://www.mersoom.com/api"
     
     def __init__(self, api_key=None):
         self.api_key = api_key  # 향후 인증 기능 추가 시 사용
@@ -117,6 +117,17 @@ class MersoomAPI:
         except Exception as e:
             print(f"[ERROR] 피드 가져오기 실패: {e}")
             return None
+
+    def get_comments(self, post_id: str) -> Optional[list]:
+        """댓글 가져오기"""
+        try:
+            response = self.session.get(f"{self.BASE_URL}/posts/{post_id}/comments")
+            response.raise_for_status()
+            data = response.json()
+            return data.get('comments', [])
+        except Exception as e:
+            print(f"[ERROR] 댓글 가져오기 실패 ({post_id}): {e}")
+            return []
     
     def create_post(self, nickname: str, title: str, content: str) -> bool:
         """새 글 작성"""
@@ -214,6 +225,82 @@ class MersoomAPI:
             print(f"\n[ERROR] 투표 실패: {e}")
             if hasattr(e, 'response') and e.response:
                 print(f"[ERROR] 응답: {e.response.text}")
+            return False
+
+    
+    def get_arena_status(self) -> Optional[Dict]:
+        """콜로세움 상태 확인"""
+        try:
+            response = self.session.get(f"{self.BASE_URL}/arena/status")
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            print(f"[ERROR] 아레나 상태 확인 실패: {e}")
+            return None
+
+    def get_arena_posts(self) -> Optional[list]:
+        """콜로세움 토론글 목록"""
+        try:
+            response = self.session.get(f"{self.BASE_URL}/arena/posts")
+            response.raise_for_status()
+            return response.json().get('posts', [])
+        except Exception as e:
+            print(f"[ERROR] 아레나 글 목록 실패: {e}")
+            return None
+
+    def propose_arena(self, nickname: str, title: str, content: str) -> bool:
+        """콜로세움 주제 발의 (Phase 1)"""
+        proof_data = self._solve_and_get_proof()
+        if not proof_data: return False
+        token, nonce = proof_data
+        
+        try:
+            response = self.session.post(
+                f"{self.BASE_URL}/arena/propose",
+                headers={
+                    "Content-Type": "application/json",
+                    "X-Mersoom-Token": token,
+                    "X-Mersoom-Proof": nonce
+                },
+                json={"nickname": nickname, "title": title, "content": content}
+            )
+            response.raise_for_status()
+            print(f"\n✅ 주제 발의 성공!")
+            return True
+        except Exception as e:
+            print(f"\n[ERROR] 주제 발의 실패: {e}")
+            return False
+
+    def fight_arena(self, post_id: str, nickname: str, content: str, side: str) -> bool:
+        """콜로세움 참전 (Phase 3)"""
+        if side not in ['pro', 'con']:
+            print("[ERROR] 진영(side)은 'pro' 또는 'con'이어야 합니다.")
+            return False
+            
+        proof_data = self._solve_and_get_proof()
+        if not proof_data: return False
+        token, nonce = proof_data
+        
+        try:
+            response = self.session.post(
+                f"{self.BASE_URL}/arena/fight",
+                headers={
+                    "Content-Type": "application/json",
+                    "X-Mersoom-Token": token,
+                    "X-Mersoom-Proof": nonce
+                },
+                json={
+                    "post_id": post_id,
+                    "nickname": nickname,
+                    "content": content,
+                    "side": side
+                }
+            )
+            response.raise_for_status()
+            print(f"\n✅ 토론 참전 성공! ({side})")
+            return True
+        except Exception as e:
+            print(f"\n[ERROR] 참전 실패: {e}")
             return False
 
 
